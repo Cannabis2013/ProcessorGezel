@@ -5,56 +5,78 @@ dp adder(in A, B : tc(32); out R : tc(32)){
         }
 }
 
-dp testAdder(out A, B : tc(32); in R : tc(32)){
+dp multiplexer(in A, B : tc(32);in S : ns(2); out R : tc(32)){
+	sig C : tc(32);
+	sig D : tc(32);
+	sig E : tc(32);
 
-        sfg test_0 {
-                A=3; B=6;
-                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,", R=", R);
-        }
-        sfg test_1 {
-                A=23;B=17;
-                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,", R=", R);
-        }
-
-        sfg test_2 {
-                A=12;B=0;
-
-                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,", R=", R);
+	use adder(C,D,E);
+        sfg run {
+		C = (S == 0) ? A : (S == 1) ? B : 0;
+		D = (S == 0) ? -B : (S == 1) ? -A : 0;
+		R = (S == 0) ? E : (S == 1) ? E : (S == 2) ? A : B;
         }
 }
 
 
-dp multiplexer(in A, B : tc(32);in S : ns(1); out R : tc(32)){
 
-        always {
-                R = S ? B : A;
-        }
+hardwired ctrl(multiplexer){run;}
+
+dp doOperation{
+	sig A : tc(32);
+	sig B : tc(32);
+	sig S : ns(2);
+	sig R : tc(32);
+	use multiplexer(A,B,S,R);
+	always
+	{
+                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R);
+	}
+	sfg run_1
+	{
+		A = 3;
+		B = 4;
+		S = 3;	
+	}
+	sfg run_2
+	{
+		A = 3;
+		B = 4;
+		S = 0;	
+	}
+
+
+	sfg run_3
+	{
+		A = 5;
+		B=  8;
+		S = 2;
+	}
+	sfg run_4
+	{
+		A = 5;
+		B= 8;
+		S = 3;
+	}
+	sfg run_5
+	{
+		A = 5;
+		B= 8;
+		S = 1;
+	}
 }
 
-dp testMultiplexer(out A, B : tc(32);out S : ns(1); in R : tc(32)){
-
-        always{
-                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,"R=", R);
-        }
-        sfg test_0 {
-                A=3; B=6;S=1;
-        }
-        sfg test_4 {
-                A=1; B=6;S=0;
-        }
-
-}
-
-fsm f_testbench(testMultiplexer){
-        initial s0;
-        state s1,s2,s3,s4;
-        @s0(test_0) -> s1;
-        @s1(test_1) -> s0;
+fsm controller(doOperation)
+{
+	initial s0;
+	state s1,s2,s3,s4;
+	@s0(run_1) -> s1;
+	@s1(run_2) -> s2;
+	@s2(run_3) -> s3;
+	@s3(run_4) -> s4;
+	@s4(run_5) -> s0;
 }
 
 system PCsystem{
-        adder(A,B,R);
-        testAdder(A,B,R)
-        multiplexer(A,B,S,R);
-        testMultiplexer(A,B,S,R);
+        doOperation;
 }
