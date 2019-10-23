@@ -1,0 +1,32 @@
+dp multiplexer(in A, B : tc(32);in S : ns(1); out R : tc(32)){
+
+	always {
+		R = S ? B : A;
+	}
+}
+
+dp testMultiplexer(out A, B : tc(32);out S : ns(1); in R : tc(32)){
+	
+	always{	
+		$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,"R=", R);
+	}
+	sfg test_0 {
+		A=3; B=6;S=1;
+	}
+	sfg test_1 {
+		A=3; B=6;S=0;
+	}
+	
+}
+
+fsm f_testbench(testMultiplexer){
+	initial s0;
+	state s1;
+	@s0(test_0) -> s1;
+	@s1(test_1) -> s0;
+}
+
+system PCsystem{
+	multiplexer(A,B,S,R);
+	testMultiplexer(A,B,S,R);
+}
