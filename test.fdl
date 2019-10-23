@@ -45,7 +45,7 @@ dp testMultiplexer(out A, B : tc(32);out S : ns(1); in R : tc(32)){
 
 }
 
-fsm f_testbench(testAdder,testMultiplexer){
+fsm f_testbench(testAdder;testMultiplexer){
         initial s0;
         state s1,s2,s3,s4;
         @s0(test_0) -> s1;
