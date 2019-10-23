@@ -36,23 +36,20 @@ dp testMultiplexer(out A, B : tc(32);out S : ns(1); in R : tc(32)){
         always{
                 $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,"R=", R);
         }
-        sfg test_3 {
+        sfg test_0 {
                 A=3; B=6;S=1;
         }
         sfg test_4 {
-                A=3; B=6;S=0;
+                A=1; B=6;S=0;
         }
 
 }
 
-fsm f_testbench(testAdder;testMultiplexer){
+fsm f_testbench(testMultiplexer){
         initial s0;
         state s1,s2,s3,s4;
         @s0(test_0) -> s1;
-        @s1(test_1) -> s2;
-        @s2(test_2) -> s3;
-        @s3(test_3) -> s4;
-        $s4(test_4) -> s0;
+        @s1(test_1) -> s0;
 }
 
 system PCsystem{
