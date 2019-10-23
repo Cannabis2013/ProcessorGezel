@@ -1,0 +1,12 @@
+dp PC(out pc_out : ns(5))
+{
+	reg a : ns(5);
+ 	 always{
+   		$display($dec,"pc_out:",pc_out);
+		a = a + 1;
+ 		pc_out = a;
+  		}
+}
+system PCsystem{
+	PC(pc_out);
+}
