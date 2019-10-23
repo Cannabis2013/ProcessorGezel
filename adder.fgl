@@ -1,0 +1,37 @@
+dp adder(in A, B : tc(32); out R : tc(32)){
+
+	always {
+		R = A + B;
+	}
+}
+
+dp testAdder(out A, B : tc(32); in R : tc(32)){
+
+	sfg test_0 {
+		A=3; B=6;
+		$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,", R=", R);
+	}
+	sfg test_1 {
+		A=23;B=17;	
+		$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,", R=", R);
+	}
+	
+	sfg test_2 {
+		A=12;B=0;
+
+		$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,", R=", R);
+	}
+}
+
+fsm f_testbench(testAdder){
+	initial s0;
+	state s1, s2;
+	@s0(test_0) -> s1;
+	@s1(test_1) -> s2;
+	@s2(test_2) -> s0;
+}
+
+system PCsystem{
+	adder(A,B,R);
+	testAdder(A,B,R);
+}
