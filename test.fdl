@@ -8,7 +8,7 @@ dp adder(in A, B : tc(32); out R : tc(32)){
 dp multiplexer(in A, B : tc(32);in S : ns(2); out R : tc(32)){
 	sig C : tc(32);
 	sig D : tc(32);
-        reg E : tc(32);
+        sig E : tc(32);
 
 	use adder(C,D,E);
         sfg run {
