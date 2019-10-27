@@ -39,7 +39,6 @@ dp multiplexer(in A, B : tc(32);
     }
 }
 
-
 hardwired ctrl(multiplexer){run;}
 
 dp doOperations{
@@ -47,14 +46,14 @@ dp doOperations{
 	sig B : tc(32);
 	sig S : ns(2);
 	sig R : tc(32);
-    sig P : ns(32);
-    sig O : tc(32);
-    sig reset : ns(1);
-    sig jump : ns(1);
-    sig jmpto : ns(32);
-    reg initialized : ns(1);
+  sig P : ns(32);
+  sig O : tc(32);
+  sig reset : ns(1);
+  sig jump : ns(1);
+  sig jmpto : ns(32);
+  reg initialized : ns(1);
 
-    use PC(O,jmpto,reset,jump,P);
+  use PC(O,jmpto,reset,jump,P);
 	
 	use multiplexer(A,B,S,R);
 	sfg disp
