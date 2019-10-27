@@ -47,7 +47,7 @@ dp doOperations{
 	use multiplexer(A,B,S,R);
 	always
 	{
-                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R", P=",P);
+                $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R,", P=",P);
                 O = P;
 	}
 	sfg run_1
