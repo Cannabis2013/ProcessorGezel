@@ -1,9 +1,8 @@
-dp PC(in O : ns(32),out pc_out : ns(32))
+dp PC(in pc_in : ns(32);out pc_out : ns(32))
 {
         always{
-                $display($dec,"pc_out:",pc_out);
-                O = O + 1;
-                pc_out = O;
+                pc_in = pc_in + 1;
+                pc_out = pc_in;
                 }
 }
 
