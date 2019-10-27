@@ -1,8 +1,8 @@
 dp PC(in pc_in : ns(32);out pc_out : ns(32))
 {
         reg a : ns(32);
-        a = pc_in;
         always{
+                a = pc_in;
                 pc_out = a + 1;
                 }
 }
