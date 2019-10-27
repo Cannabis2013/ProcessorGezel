@@ -1,8 +1,7 @@
 dp PC(in pc_in : ns(32);out pc_out : ns(32))
 {
         always{
-                pc_in = pc_in + 1;
-                pc_out = pc_in;
+                pc_out = pc_in + 1;
                 }
 }
 
