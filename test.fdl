@@ -1,3 +1,12 @@
+dp PC(in O : ns(32),out pc_out : ns(32))
+{
+        always{
+                $display($dec,"pc_out:",pc_out);
+                O = O + 1;
+                pc_out = O;
+                }
+}
+
 dp adder(in A, B : tc(32); out R : tc(32)){
 
         always {
@@ -5,12 +14,22 @@ dp adder(in A, B : tc(32); out R : tc(32)){
         }
 }
 
-dp multiplexer(in A, B : tc(32);in S : ns(2); out R : tc(32)){
+dp multiplexer(in A, B : tc(32);
+                in S : ns(2);
+                out R : tc(32)){
+
 	sig C : tc(32);
 	sig D : tc(32);
         sig E : tc(32);
+        reg O : ns(32);
+        reg P : ns(32);
 
+        use PC(O,P);
 	use adder(C,D,E);
+
+        always{
+            $display($dec,"Cycle:",$cycle, "P=",P);
+        }
         sfg run {
 		C = (S == 0) ? A : (S == 1) ? B : 0;
 		D = (S == 0) ? -B : (S == 1) ? -A : 0;
@@ -22,7 +41,7 @@ dp multiplexer(in A, B : tc(32);in S : ns(2); out R : tc(32)){
 
 hardwired ctrl(multiplexer){run;}
 
-dp doOperation{
+dp doOperations{
 	sig A : tc(32);
 	sig B : tc(32);
 	sig S : ns(2);
@@ -66,7 +85,7 @@ dp doOperation{
 	}
 }
 
-fsm controller(doOperation)
+fsm controller(doOperations)
 {
 	initial s0;
 	state s1,s2,s3,s4;
@@ -78,5 +97,5 @@ fsm controller(doOperation)
 }
 
 system PCsystem{
-        doOperation;
+        doOperations;
 }
