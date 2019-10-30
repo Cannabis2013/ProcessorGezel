@@ -1,9 +1,9 @@
-dp PC(in pc_in, pc_jmp : ns(32);in r, j : ns(1);out pc_out : ns(32))
+dp PC(in pc_in, jumpto : ns(32);in reset, jump : ns(1);out pc_out : ns(32))
 {
     reg a : tc(32);
     sfg run
     {
-    	a = r ?  -1 : j ? pc_jmp : pc_in;
+    	a = reset ?  -1 : jump ? jumpto : pc_in;
     	pc_out =  a + 1;
 	}
 }
@@ -48,11 +48,35 @@ dp register(in aSel, bSel : ns(3);in write : ns(1); in wAdress : ns(3);in wVal :
 		a5 = write ? (wAdress == 5) ? wVal : a5 : a5;
 		a6 = write ? (wAdress == 6) ? wVal : a6 : a6;
 		a7 = write ? (wAdress == 7) ? wVal : a7 : a7;
-		
 	}
 }
 
 hardwired ctrl(register){run;}
+
+ipblock instmem(in adress : ns(5);in wr,rd : ns(1);in idata : ns(32);out odata : ns(32))
+{
+	iptype "ram";
+	ipparm "size=64";
+	ipparm "wl=32";
+	ipparm "file=program.txt";
+}
+
+dp iMemmory(in adress : ns(5);out instruction : ns(32))
+{
+	sig wr : ns(1);
+	sig rd : ns(1);
+	sig idata : ns(32);
+	sig odata : ns(32);
+	
+	use instmem(adress,wr,rd,idata,odata);
+	always
+	{
+		wr = 0;
+		rd = 1;
+		idata = 0;
+		instruction = odata;
+	}
+}
 
 dp ALU(in A, B : tc(32);
                 in S : ns(2);
@@ -65,7 +89,6 @@ dp ALU(in A, B : tc(32);
 
 	use adder(C,D,E);
 
-
 	sfg run 
 	{
 		C = (S == 0) ? A : (S == 1) ? B : 0;
@@ -77,6 +100,7 @@ dp ALU(in A, B : tc(32);
 }
 
 hardwired ctrl(ALU){run;}
+
 
 dp doOperations{
 	sig A : tc(32);
@@ -112,7 +136,7 @@ dp doOperations{
 		initialized = 1;
 	}
 	
-	sfg run_1 // A + B
+	sfg run_1 // A - B
 	{
 		A = 3;
 		B = 4;
@@ -121,7 +145,7 @@ dp doOperations{
 		jump = 0;
 		O = P;
 	}
-	sfg run_2 // B + A
+	sfg run_2 // B - A
 	{
 		A = 3;
 		B = 4;
