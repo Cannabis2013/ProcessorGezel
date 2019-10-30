@@ -1,18 +1,18 @@
 dp PC(in pc_in, pc_jmp : ns(32);in r, j : ns(1);out pc_out : ns(32))
 {
-        reg a : tc(32);
-        sfg run
-        {
-        	a = r ?  -1 : j ? pc_jmp : pc_in;
-        	pc_out = a + 1;
-    	}
+    reg a : tc(32);
+    sfg run
+    {
+    	a = r ?  -1 : j ? pc_jmp : pc_in;
+    	pc_out =  a + 1;
+	}
 }
 
 hardwired ctrl(PC){run;}
 
 dp adder(in A, B : tc(32); out R : tc(32)){
 
-        sfg run 
+    sfg run 
         {
         	R = A + B;
         }
@@ -20,8 +20,43 @@ dp adder(in A, B : tc(32); out R : tc(32)){
 
 hardwired ctrl(adder){run;}
 
-dp multiplexer(in A, B : tc(32);
+dp register(in aSel, bSel : ns(3);in write : ns(1); in wAdress : ns(3);in wVal : tc(32); out A,B : tc(32))
+{
+	reg a0,a1,a2,a3,a4,a5,a6,a7 : tc(32);
+	sfg run
+	{
+		a0 = 0;
+		A = (aSel == 1) ? a1 :
+			(aSel == 2) ? a2 :
+			(aSel == 3) ? a3 :
+			(aSel == 4) ? a4 :
+			(aSel == 5) ? a5 :
+			(aSel == 6) ? a6 :
+			(aSel == 7) ? a7 : a0;
+		B = (bSel == 1) ? a1 :
+			(bSel == 2) ? a2 :
+			(bSel == 3) ? a3 :
+			(bSel == 4) ? a4 :
+			(bSel == 5) ? a5 :
+			(bSel == 6) ? a6 :
+			(bSel == 7) ? a7 : a0;
+		
+		a1 = write ? (wAdress == 1) ? wVal : a1 : a1;
+		a2 = write ? (wAdress == 2) ? wVal : a2 : a2;
+		a3 = write ? (wAdress == 3) ? wVal : a3 : a3;
+		a4 = write ? (wAdress == 4) ? wVal : a4 : a4;
+		a5 = write ? (wAdress == 5) ? wVal : a5 : a5;
+		a6 = write ? (wAdress == 6) ? wVal : a6 : a6;
+		a7 = write ? (wAdress == 7) ? wVal : a7 : a7;
+		
+	}
+}
+
+hardwired ctrl(register){run;}
+
+dp ALU(in A, B : tc(32);
                 in S : ns(2);
+                out N,Z : ns(1);
                 out R : tc(32)){
 
 	sig C : tc(32);
@@ -34,31 +69,33 @@ dp multiplexer(in A, B : tc(32);
 	sfg run 
 	{
 		C = (S == 0) ? A : (S == 1) ? B : 0;
-		D = (S == 0) ? -B : (S == 1) ? -A : 0;
+		D = (S == 0) ? B : (S == 1) ? A : 0;
 		R = (S == 0) ? E : (S == 1) ? E : (S == 2) ? A : B;
+		Z = (R == 0) ? 1 : 0;
+		N = (R < 0) ? 1 : 0;
     }
 }
 
-hardwired ctrl(multiplexer){run;}
+hardwired ctrl(ALU){run;}
 
 dp doOperations{
 	sig A : tc(32);
 	sig B : tc(32);
 	sig S : ns(2);
 	sig R : tc(32);
-  sig P : ns(32);
-  sig O : tc(32);
-  sig reset : ns(1);
-  sig jump : ns(1);
-  sig jmpto : ns(32);
-  reg initialized : ns(1);
+  	sig P : ns(32);
+  	sig O : tc(32);
+  	sig reset : ns(1);
+  	sig jump : ns(1);
+  	sig jmpto : ns(32);
+  	reg initialized : ns(1);
 
-  use PC(O,jmpto,reset,jump,P);
+  	use PC(O,jmpto,reset,jump,P);
 	
-	use multiplexer(A,B,S,R);
+	use ALU(A,B,S,R);
 	sfg disp
 	{
-        $display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R,", reset=",reset,", jump=",jump,", P=",P);
+    	$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R,", reset=",reset,", jump=",jump,", P=",P);
 	}
 	
 	sfg init
@@ -73,7 +110,7 @@ dp doOperations{
 		initialized = 1;
 	}
 	
-	sfg run_1
+	sfg run_1 // A + B
 	{
 		A = 3;
 		B = 4;
@@ -82,7 +119,7 @@ dp doOperations{
 		jump = 0;
 		O = P;
 	}
-	sfg run_2
+	sfg run_2 // B + A
 	{
 		A = 3;
 		B = 4;
@@ -92,8 +129,7 @@ dp doOperations{
 		O = P;
 	}
 
-
-	sfg run_3
+	sfg run_3 // A
 	{
 		A = 5;
 		B=  8;
@@ -102,7 +138,7 @@ dp doOperations{
 		jump = 0;
 		O = P;
 	}
-	sfg run_4
+	sfg run_4 // B
 	{
 		A = 5;
 		B= 8;
@@ -117,8 +153,18 @@ dp doOperations{
 		B= 8;
 		S = 3;
 		reset = 1;
+		jump = 1;
+		jmpto = 10;
+		O = P;
+	}
+	
+	sfg run_6 // A - B
+	{
+		A = 3;
+		B = -4;
+		S = 0;
+		reset = 0;
 		jump = 0;
-		jmpto = 0;
 		O = P;
 	}
 }
@@ -126,14 +172,15 @@ dp doOperations{
 fsm controller(doOperations)
 {
 	initial s0;
-	state s1,s2,s3,s4;
+	state s1,s2,s3,s4,s5;
 	@s0 if(initialized) 
 		then (run_1,disp) -> s1;
 		else (init) -> s0;
 	@s1(run_2,disp) -> s2;
 	@s2(run_3,disp) -> s3;
 	@s3(run_4,disp) -> s4;
-	@s4(run_5,disp) -> s0;
+	@s4(run_5,disp) -> s5;
+	@s5(run_6,disp) -> s0;
 }
 
 system PCsystem{
