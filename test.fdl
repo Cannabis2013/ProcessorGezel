@@ -7,7 +7,6 @@ dp PC(in pc_in, jumpto : ns(32);in reset, jump : ns(1);out pc_out : ns(32))
     	pc_out =  a + 1;
 	}
 }
-
 hardwired ctrl(PC){run;}
 
 dp adder(in A, B : tc(32); out R : tc(32)){
@@ -17,7 +16,6 @@ dp adder(in A, B : tc(32); out R : tc(32)){
         	R = A + B;
         }
 }
-
 hardwired ctrl(adder){run;}
 
 dp register(in aSel, bSel : ns(3);in write : ns(1); in wAdress : ns(3);in wVal : tc(32); out A,B : tc(32))
@@ -50,7 +48,6 @@ dp register(in aSel, bSel : ns(3);in write : ns(1); in wAdress : ns(3);in wVal :
 		a7 = write ? (wAdress == 7) ? wVal : a7 : a7;
 	}
 }
-
 hardwired ctrl(register){run;}
 
 ipblock instmem(in adress : ns(5);in wr,rd : ns(1);in idata : ns(32);out odata : ns(32))
@@ -78,10 +75,9 @@ dp iMemmory(in adress : ns(5);out instruction : ns(32))
 	}
 }
 
-dp ALU(in A, B : tc(32);
-                in S : ns(2);
-                out N,Z : ns(1);
-                out R : tc(32)){
+dp multiplexer(in A, B : tc(32);
+                in select : ns(2);
+                out result : tc(32)){
 
 	sig C : tc(32);
 	sig D : tc(32);
@@ -91,16 +87,31 @@ dp ALU(in A, B : tc(32);
 
 	sfg run 
 	{
-		C = (S == 0) ? A : (S == 1) ? B : 0;
-		D = (S == 0) ? B : (S == 1) ? A : 0;
-		R = (S == 0) ? E : (S == 1) ? E : (S == 2) ? A : B;
-		Z = (R == 0) ? 1 : 0;
-		N = (R < 0) ? 1 : 0;
+		C = (select == 0) ? A : (select == 1) ? B : 0;
+		D = (select == 0) ? B : (select == 1) ? A : 0;
+		result = (select == 0) ? E : (select == 1) ? E : (select == 2) ? A : B;
+		
     }
 }
 
-hardwired ctrl(ALU){run;}
+hardwired ctrl(multiplexer){run;}
 
+dp ALU(in A, B : tc(32);
+                in S : ns(2);
+                out N,Z : ns(1);
+                out result : tc(32))
+{
+	sig R : tc(32);
+	use multiplexer(A,B,S,R);
+	
+	sfg run
+	{
+		result = R;
+		Z = (R == 0) ? 1 : 0;
+		N = (R < 0) ? 1 : 0;
+	}
+}
+hardwired ctrl(ALU){run;}
 
 dp doOperations{
 	sig A : tc(32);
@@ -117,8 +128,8 @@ dp doOperations{
   	reg initialized : ns(1);
 
   	use PC(O,jmpto,reset,jump,P);
-	
 	use ALU(A,B,S,N,Z,R);
+	
 	sfg disp
 	{
     	$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R,", reset=",reset,", jump=",jump,", P=",P);
@@ -178,7 +189,7 @@ dp doOperations{
 		A = 5;
 		B= 8;
 		S = 3;
-		reset = 1;
+		reset = 0;
 		jump = 1;
 		jmpto = 10;
 		O = P;
