@@ -201,9 +201,9 @@ dp control_unit
 	}
 	sfg instruct3
 	{
-		m_jumpto = Z ? 0 : 13;
+		m_jumpto = Z ? rm : 0;
 		c_reset = 0;
-		c_jump = m_a_value ? 0 : 1;
+		c_jump = Z ? 1 : 0;
 		
 		c_select = 0;
 		s_a_select = rn;
