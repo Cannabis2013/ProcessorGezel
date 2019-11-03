@@ -18,7 +18,7 @@ dp adder(in A, B : tc(32); out R : tc(32)){
 }
 hardwired ctrl(adder){run;}
 
-dp register(in aSel, bSel : ns(3);in write : ns(1); in wAdress : ns(3);in wVal : tc(32); out A,B : tc(32))
+dp register(in aSel, bSel : ns(3);in write : ns(1); in valAdress : ns(3);in storeVal : tc(32); out A,B : tc(32))
 {
 	reg a0,a1,a2,a3,a4,a5,a6,a7 : tc(32);
 	sfg run
@@ -39,13 +39,13 @@ dp register(in aSel, bSel : ns(3);in write : ns(1); in wAdress : ns(3);in wVal :
 			(bSel == 6) ? a6 :
 			(bSel == 7) ? a7 : a0;
 		
-		a1 = write ? (wAdress == 1) ? wVal : a1 : a1;
-		a2 = write ? (wAdress == 2) ? wVal : a2 : a2;
-		a3 = write ? (wAdress == 3) ? wVal : a3 : a3;
-		a4 = write ? (wAdress == 4) ? wVal : a4 : a4;
-		a5 = write ? (wAdress == 5) ? wVal : a5 : a5;
-		a6 = write ? (wAdress == 6) ? wVal : a6 : a6;
-		a7 = write ? (wAdress == 7) ? wVal : a7 : a7;
+		a1 = write ? (valAdress == 1) ? storeVal : a1 : a1;
+		a2 = write ? (valAdress == 2) ? storeVal : a2 : a2;
+		a3 = write ? (valAdress == 3) ? storeVal : a3 : a3;
+		a4 = write ? (valAdress == 4) ? storeVal : a4 : a4;
+		a5 = write ? (valAdress == 5) ? storeVal : a5 : a5;
+		a6 = write ? (valAdress == 6) ? storeVal : a6 : a6;
+		a7 = write ? (valAdress == 7) ? storeVal : a7 : a7;
 	}
 }
 hardwired ctrl(register){run;}
