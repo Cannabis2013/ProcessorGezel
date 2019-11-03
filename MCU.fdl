@@ -1,0 +1,319 @@
+dp PC(in reset, jump : ns(1);in jumpto : ns(5);out pc_out : ns(5))
+{
+	reg a : ns(5);
+    always
+    {
+    	a = reset ? -1 : jump ? jumpto : a + 1;
+    	pc_out =  a;
+	}
+}
+
+dp adder(in A, B : tc(32); out R : tc(32)){
+
+    sfg run 
+        {
+        	R = A + B;
+        }
+}
+hardwired ctrl(adder){run;}
+
+dp register(in aSel, bSel : ns(3);in write : ns(1); in valAdress : ns(3);in storeVal : tc(32); out A,B : tc(32))
+{
+	reg a0,a1,a2,a3,a4,a5,a6,a7 : tc(32);
+	sfg run
+	{
+		a0 = 0;
+		A = (aSel == 1) ? a1 :
+			(aSel == 2) ? a2 :
+			(aSel == 3) ? a3 :
+			(aSel == 4) ? a4 :
+			(aSel == 5) ? a5 :
+			(aSel == 6) ? a6 :
+			(aSel == 7) ? a7 : a0;
+		B = (bSel == 1) ? a1 :
+			(bSel == 2) ? a2 :
+			(bSel == 3) ? a3 :
+			(bSel == 4) ? a4 :
+			(bSel == 5) ? a5 :
+			(bSel == 6) ? a6 :
+			(bSel == 7) ? a7 : a0;
+		
+		a1 = write ? (valAdress == 1) ? storeVal : a1 : a1;
+		a2 = write ? (valAdress == 2) ? storeVal : a2 : a2;
+		a3 = write ? (valAdress == 3) ? storeVal : a3 : a3;
+		a4 = write ? (valAdress == 4) ? storeVal : a4 : a4;
+		a5 = write ? (valAdress == 5) ? storeVal : a5 : a5;
+		a6 = write ? (valAdress == 6) ? storeVal : a6 : a6;
+		a7 = write ? (valAdress == 7) ? storeVal : a7 : a7;
+	}
+}
+hardwired ctrl(register){run;}
+
+ipblock instmem(in adress : ns(5);in wr,rd : ns(1);in idata : ns(32);out odata : ns(32))
+{
+	iptype "ram";
+	ipparm "size=64";
+	ipparm "wl=32";
+	ipparm "file=program.txt";
+}
+
+dp instructionregister(in adress : ns(5);out instruction : ns(32))
+{
+	sig wr : ns(1);
+	sig rd : ns(1);
+	sig idata : ns(32);
+	sig odata : ns(32);
+	
+	use instmem(adress,wr,rd,idata,odata);
+	always
+	{
+		wr = 0;
+		rd = 1;
+		idata = 0;
+		instruction = odata;
+	}
+}
+
+dp multiplexer(in A, B : tc(32);
+                in select : ns(2);
+                out result : tc(32)){
+
+	sig C : tc(32);
+	sig D : tc(32);
+	sig E : tc(32);
+
+	use adder(C,D,E);
+
+	sfg run 
+	{
+		C = (select == 0) ? A : (select == 1) ? B : 0;
+		D = (select == 0) ? B : (select == 1) ? A : 0;
+		result = (select == 0) ? E : (select == 1) ? E : (select == 2) ? A : B;
+		
+    }
+}
+
+hardwired ctrl(multiplexer){run;}
+
+dp ALU(in A, B : tc(32);
+                in S : ns(2);
+                out N,Z : ns(1);
+                out result : tc(32))
+{
+	sig R : tc(32);
+	use multiplexer(A,B,S,R);
+	
+	sfg run
+	{
+		result = R;
+		Z = (R == 0) ? 1 : 0;
+		N = (R < 0) ? 1 : 0;
+	}
+}
+hardwired ctrl(ALU){run;}
+
+dp processor(in s_a_select : ns(3);
+	in s_b_select : ns(3);
+	in s_write : ns(1);
+	in s_wr_adrs : ns(3);
+	in s_wr_val : tc(32);
+	out s_a_value : tc(32);
+	out s_b_value : tc(32);
+	in s_alu_a : tc(32);
+	in s_alu_b : tc(32);
+	in c_select : ns(2);
+	out s_result : tc(32);
+  	out s_negative : ns(1);
+  	out s_zero : ns(1))
+{
+  	use register(s_a_select,s_b_select,s_write,s_wr_adrs,s_wr_val,s_a_value,s_b_value);
+	use ALU(s_alu_a,s_alu_b,c_select,s_negative,s_zero,s_result);
+}
+
+
+dp control_unit
+{
+	sig m_jumpto : ns(5);
+	sig c_reset : ns(1);
+	sig c_jump : ns(1);
+	sig m_instr_opt : ns(32);
+	reg m_opt_id : ns(4);
+	sig m_index : ns(5);
+	
+	sig s_a_select : ns(3);
+	sig m_b_select : ns(3);
+	sig m_write : ns(1);
+	sig m_wr_adrs : ns(3);
+	sig m_wr_val : tc(32);
+	sig m_a_value : tc(32);
+	sig m_b_value : tc(32);
+	sig m_alu_a : tc(32);
+	sig m_alu_b : tc(32);
+	sig c_select : ns(2);
+	sig m_result : tc(32);
+	
+	
+	use PC(c_reset,c_jump,m_jumpto,m_index);
+	use instructionregister(m_index,m_instr_opt);
+	use processor(s_a_select,m_b_select,m_write,m_wr_adrs,m_wr_val,m_a_value,m_b_value,m_alu_a,m_alu_b,c_select,m_result);
+	
+	always
+	{
+		m_opt_id = m_instr_opt;
+	}
+	
+	sfg instruct1
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 1;
+		m_wr_adrs = 6;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct2
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 3;
+		m_b_select = 0;
+		m_write = 1;
+		m_wr_adrs = 4;
+		m_wr_val = m_a_value;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct3
+	{
+		m_jumpto = m_a_value ? 0 : 13;
+		c_reset = 0;
+		c_jump = m_a_value ? 0 : 1;
+		
+		c_select = 0;
+		s_a_select = 2;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct4
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct5
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct6
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct7
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct8
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	sfg instruct9
+	{
+		m_jumpto = 0;
+		c_reset = 0;
+		c_jump = 0;
+		
+		c_select = 0;
+		s_a_select = 0;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+	}
+	
+}
+
+fsm controller(control_unit)
+{
+	initial s0;
+	@s0 if (m_opt_id == 0) then (instruct1) -> s0;
+		else if(m_opt_id == 1) then (instruct2) -> s0;
+		else if(m_opt_id == 2) then (instruct3) -> s0;
+		else if(m_opt_id == 3) then (instruct4) -> s0;
+		else if(m_opt_id == 4) then (instruct5) -> s0;
+		else if(m_opt_id == 5) then (instruct6) -> s0;
+		else if(m_opt_id == 6) then (instruct7) -> s0;
+		else if(m_opt_id == 7) then (instruct8) -> s0;
+		else (instruct9) -> s0;
+}
+
+system PCsystem{
+    control_unit;
+}
