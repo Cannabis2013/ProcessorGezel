@@ -137,8 +137,12 @@ dp control_unit
 	sig c_reset : ns(1);
 	sig c_jump : ns(1);
 	sig m_instr_opt : ns(32);
+	sig rm : ns(8);
+	sig rn : ns(4);
 	reg m_opt_id : ns(4);
+	
 	sig m_index : ns(5);
+	
 	
 	sig s_a_select : ns(3);
 	sig m_b_select : ns(3);
@@ -151,15 +155,18 @@ dp control_unit
 	sig m_alu_b : tc(32);
 	sig c_select : ns(2);
 	sig m_result : tc(32);
-	
+	sig N : ns(1);
+  	sig Z : ns(1);
 	
 	use PC(c_reset,c_jump,m_jumpto,m_index);
 	use instructionregister(m_index,m_instr_opt);
-	use processor(s_a_select,m_b_select,m_write,m_wr_adrs,m_wr_val,m_a_value,m_b_value,m_alu_a,m_alu_b,c_select,m_result);
+	use processor(s_a_select,m_b_select,m_write,m_wr_adrs,m_wr_val,m_a_value,m_b_value,m_alu_a,m_alu_b,c_select,m_result,N,Z);
 	
 	always
 	{
 		m_opt_id = m_instr_opt;
+		rn = m_instr_opt << 4;
+		rm = m_instr_opt << 8;
 	}
 	
 	sfg instruct1
@@ -172,8 +179,8 @@ dp control_unit
 		s_a_select = 0;
 		m_b_select = 0;
 		m_write = 1;
-		m_wr_adrs = 6;
-		m_wr_val = 0;
+		m_wr_adrs = rn;
+		m_wr_val = rm;
 		m_alu_a = 0;
 		m_alu_b = 0;
 	}
@@ -184,27 +191,27 @@ dp control_unit
 		c_jump = 0;
 		
 		c_select = 0;
-		s_a_select = 3;
+		s_a_select = rm;
 		m_b_select = 0;
 		m_write = 1;
-		m_wr_adrs = 4;
+		m_wr_adrs = rn;
 		m_wr_val = m_a_value;
 		m_alu_a = 0;
 		m_alu_b = 0;
 	}
 	sfg instruct3
 	{
-		m_jumpto = m_a_value ? 0 : 13;
+		m_jumpto = Z ? 0 : 13;
 		c_reset = 0;
 		c_jump = m_a_value ? 0 : 1;
 		
 		c_select = 0;
-		s_a_select = 2;
+		s_a_select = rn;
 		m_b_select = 0;
 		m_write = 0;
 		m_wr_adrs = 0;
 		m_wr_val = 0;
-		m_alu_a = 0;
+		m_alu_a = rn;
 		m_alu_b = 0;
 	}
 	sfg instruct4
@@ -214,27 +221,27 @@ dp control_unit
 		c_jump = 0;
 		
 		c_select = 0;
-		s_a_select = 0;
-		m_b_select = 0;
-		m_write = 0;
-		m_wr_adrs = 0;
-		m_wr_val = 0;
-		m_alu_a = 0;
-		m_alu_b = 0;
+		s_a_select = rn;
+		m_b_select = rm;
+		m_write = 1;
+		m_wr_adrs = rn;
+		m_wr_val = m_result;
+		m_alu_a = m_a_value;
+		m_alu_b = m_b_value;
 	}
 	sfg instruct5
 	{
-		m_jumpto = 0;
+		m_jumpto = rm;
 		c_reset = 0;
-		c_jump = 0;
+		c_jump = N ? 1 : 0;
 		
-		c_select = 0;
+		c_select = 2;
 		s_a_select = 0;
 		m_b_select = 0;
 		m_write = 0;
 		m_wr_adrs = 0;
 		m_wr_val = 0;
-		m_alu_a = 0;
+		m_alu_a = rn;
 		m_alu_b = 0;
 	}
 	sfg instruct6
@@ -244,13 +251,13 @@ dp control_unit
 		c_jump = 0;
 		
 		c_select = 0;
-		s_a_select = 0;
+		s_a_select = rn;
 		m_b_select = 0;
-		m_write = 0;
-		m_wr_adrs = 0;
-		m_wr_val = 0;
-		m_alu_a = 0;
-		m_alu_b = 0;
+		m_write = 1;
+		m_wr_adrs = rn;
+		m_wr_val = m_result;
+		m_alu_a = m_a_value;
+		m_alu_b = -rm;
 	}
 	sfg instruct7
 	{
@@ -259,19 +266,19 @@ dp control_unit
 		c_jump = 0;
 		
 		c_select = 0;
-		s_a_select = 0;
-		m_b_select = 0;
-		m_write = 0;
-		m_wr_adrs = 0;
-		m_wr_val = 0;
-		m_alu_a = 0;
-		m_alu_b = 0;
+		s_a_select = rn;
+		m_b_select = rm;
+		m_write = 1;
+		m_wr_adrs = rn;
+		m_wr_val = m_result;
+		m_alu_a = m_a_value;
+		m_alu_b = -m_b_value;
 	}
 	sfg instruct8
 	{
-		m_jumpto = 0;
+		m_jumpto = rn;
 		c_reset = 0;
-		c_jump = 0;
+		c_jump = 1;
 		
 		c_select = 0;
 		s_a_select = 0;
@@ -289,13 +296,13 @@ dp control_unit
 		c_jump = 0;
 		
 		c_select = 0;
-		s_a_select = 0;
+		s_a_select = rn;
 		m_b_select = 0;
-		m_write = 0;
-		m_wr_adrs = 0;
-		m_wr_val = 0;
-		m_alu_a = 0;
-		m_alu_b = 0;
+		m_write = 1;
+		m_wr_adrs = rn;
+		m_wr_val = m_result;
+		m_alu_a = m_a_value;
+		m_alu_b = rm;
 	}
 	
 }
@@ -308,9 +315,9 @@ fsm controller(control_unit)
 		else if(m_opt_id == 2) then (instruct3) -> s0;
 		else if(m_opt_id == 3) then (instruct4) -> s0;
 		else if(m_opt_id == 4) then (instruct5) -> s0;
-		else if(m_opt_id == 5) then (instruct6) -> s0;
-		else if(m_opt_id == 6) then (instruct7) -> s0;
-		else if(m_opt_id == 7) then (instruct8) -> s0;
+		else if(m_opt_id == 8) then (instruct6) -> s0;
+		else if(m_opt_id == 9) then (instruct7) -> s0;
+		else if(m_opt_id == 12) then (instruct8) -> s0;
 		else (instruct9) -> s0;
 }
 
