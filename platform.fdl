@@ -9,7 +9,7 @@ dp PC(in reset, jump, incr : ns(1);in jumpto : ns(5);out pc_out : ns(5))
     always
     {
     	a = reset ? 0 : jump ? jumpto : incr ? a + 1 : a;
-    	pc_out =  a + 1;
+    	pc_out =  a;
 	}
 }
 
@@ -150,7 +150,7 @@ dp CPU(out M_datain : ns(32);
 	sig c_jump : ns(1);
 	sig c_incr : ns(1);
 	
-	sig m_instr_opt : ns(16);
+	reg m_instr_opt : ns(16);
 	sig rm : ns(8);
 	sig rn : ns(4);
 	
@@ -158,7 +158,6 @@ dp CPU(out M_datain : ns(32);
 	reg m_ready : ns(1);
 	
 	sig m_index : ns(5);
-	
 	sig s_a_select : ns(3);
 	sig m_b_select : ns(3);
 	sig m_write : ns(1);
@@ -175,16 +174,6 @@ dp CPU(out M_datain : ns(32);
   	
   	sig opt : ns(4);
   	
-  	reg in0 : ns(4);
-  	reg in1 : ns(4);
-  	reg in2 : ns(4);
-  	reg in3 : ns(4);
-  	reg in4 : ns(4);
-  	reg in8 : ns(4);
-  	reg in9 : ns(4);
-  	reg in12 : ns(4);
-  	reg in15: ns(4);
-	
 	use PC(c_reset,c_jump,c_incr,m_jumpto,m_index);
 	use instructionregister(m_index,m_instr_opt);
 	use processor(s_a_select,m_b_select,m_write,m_wr_adrs,m_wr_val,reg_val_a,reg_val_b,m_alu_a,m_alu_b,c_select,m_result,N,Z);
@@ -195,21 +184,9 @@ dp CPU(out M_datain : ns(32);
 		rn = m_instr_opt >> 8;
 		rm = m_instr_opt;
 		
-		opt = m_opt_id;
-		
-		in0 = 0;
-	  	in1 = 1;
-	  	in2 = 2;
-	  	in3 = 3;
-	  	in4 = 4;
-	  	in8 = 8;
-	  	in9 = 9;
-	  	in12 = 12;
-	  	in15 = 15;
+		opt = m_instr_opt >> 12;
 	  	
-	  	$display($dec,"Cycle:",$cycle, ": PC_index= ",m_index
-	  	, " ,opt code= ",opt ," , incr= ", c_incr, " data_in_rdy= ", M_datainrdy," ,data_out_rdy= ",m_ready, " , dataout= ",M_dataout," , datain= ", M_datain);
-	  	
+	  	$display($dec,"Cycle:",$cycle, ": PC_index = ",m_index, ", incr = ", c_incr, ", opt = ",opt, ", rn = ", rn, ", rm = ", rm);
 	}
 	
 	sfg wait
@@ -255,13 +232,15 @@ dp CPU(out M_datain : ns(32);
 		M_datainrdy = 1;
 		M_cmd = 536870912;
 		m_ready = M_dataoutrdy;
+		
+		
 	}
 	sfg instruct0
 	{
 		m_jumpto = 0;
 		c_reset = 0;
 		c_jump = 0;
-		c_incr = 1;
+		c_incr = (m_index < 7) ? 1 : 0;
 		
 		c_select = 0;
 		s_a_select = rm;
@@ -277,6 +256,7 @@ dp CPU(out M_datain : ns(32);
 		M_cmd = 0;
 		
 		
+	  	
 	}
 	sfg instruct1
 	{
@@ -300,6 +280,8 @@ dp CPU(out M_datain : ns(32);
 		m_ready = 0;
 		
 		M_cmd = 0;
+		
+		
 	}
 	sfg instruct2
 	{
@@ -466,18 +448,18 @@ fsm controller(CPU)
 {
 	initial s0;
 	state s1,s2;
-	@s0 if(m_opt_id == in0) 
+	@s0 if(m_opt_id == 0) 
 		then (instruct0) -> s0;
 		else (req) -> s1;
 	@s1 if(m_ready) then (instruct1) -> s2;
 		else (wait) -> s1;
-	@s2 if (m_opt_id == in0) then (instruct0) -> s0;
-		else if(m_opt_id == in2) then (instruct2) -> s2;
-		else if(m_opt_id == in3) then (instruct3) -> s2;
-		else if(m_opt_id == in4) then (instruct4) -> s2;
-		else if(m_opt_id == in8) then (instruct8) -> s2;
-		else if(m_opt_id == in9) then (instruct9) -> s2;
-		else if(m_opt_id == in12) then (instruct12) -> s2;
+	@s2 if (m_opt_id == 0) then (instruct0) -> s0;
+		else if(m_opt_id == 2) then (instruct2) -> s2;
+		else if(m_opt_id == 3) then (instruct3) -> s2;
+		else if(m_opt_id == 4) then (instruct4) -> s2;
+		else if(m_opt_id == 8) then (instruct8) -> s2;
+		else if(m_opt_id == 9) then (instruct9) -> s2;
+		else if(m_opt_id == 12) then (instruct12) -> s2;
 		else (instruct15) -> s2;
 }
 ////////////////////////////
