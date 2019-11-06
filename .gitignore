@@ -1,2 +1,6 @@
 *.autosave
 *.project
+*.vcd
+*.ecg
+traces
+datamemory.txt

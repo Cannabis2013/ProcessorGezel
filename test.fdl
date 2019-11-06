@@ -1,21 +1,13 @@
-dp PC(in jumpto : ns(32);in reset, jump : ns(1);out pc_out : ns(32))
+dp PC(in jumpto : ns(32);in reset, jump, incr : ns(1);out pc_out : ns(32))
 {
 	reg a : ns(32);
     always
     {
-    	a = reset ? -1 : jump ? jumpto : a + 1;
+    	a = reset ? -1 : jump ? jumpto : incr ? a + 1 : a;
     	pc_out =  a;
 	}
 }
 
-dp adder(in A, B : tc(32); out R : tc(32)){
-
-    sfg run 
-        {
-        	R = A + B;
-        }
-}
-hardwired ctrl(adder){run;}
 
 dp register(in aSel, bSel : ns(3);in write : ns(1); in valAdress : ns(3);in storeVal : tc(32); out A,B : tc(32))
 {
@@ -80,15 +72,13 @@ dp multiplexer(in A, B : tc(32);
 
 	sig C : tc(32);
 	sig D : tc(32);
-	sig E : tc(32);
 
-	use adder(C,D,E);
 
 	sfg run 
 	{
 		C = (select == 0) ? A : (select == 1) ? B : 0;
 		D = (select == 0) ? B : (select == 1) ? A : 0;
-		result = (select == 0) ? E : (select == 1) ? E : (select == 2) ? A : B;
+		result = (select == 0) ? C + D : (select == 1) ? C + D : (select == 2) ? A : B;
 		
     }
 }
@@ -124,15 +114,15 @@ dp doOperations{
   	sig m_jump : ns(1);
   	sig m_jmpto : ns(32);
   	reg initialized : ns(1);
-  	
+  	sig incr : ns(1);
   	
 
-  	use PC(m_jmpto,m_reset,m_jump,P);
+  	use PC(m_jmpto,m_reset,m_jump,incr,P);
 	use ALU(A,B,S,N,Z,R);
 	
 	sfg disp
 	{
-    	$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R,", reset=",m_reset,", jump=",m_jump,", P=",P);
+    	$display($dec,"Cycle:",$cycle, ", A=",A, ",B=", B,",S=",S,",R=", R,", reset=",m_reset,", jump=",m_jump,", P=",P, ", Z=",Z);
     	
 	}
 	
@@ -141,6 +131,7 @@ dp doOperations{
 		m_reset = 0;
 		m_jump = 0;
 		m_jmpto = 0;
+		incr = 0;
 		A = 0;
 		B = 0;
 		S = 0;
@@ -154,6 +145,7 @@ dp doOperations{
 		S = 0;
 		m_reset = 0;
 		m_jump = 0;
+		incr = 0;
 	}
 	sfg run_2 // B - A
 	{
@@ -162,6 +154,7 @@ dp doOperations{
 		S = 1;
 		m_reset = 0;
 		m_jump = 0;
+		incr = 1;
 	}
 
 	sfg run_3 // A
@@ -171,6 +164,7 @@ dp doOperations{
 		S = 2;
 		m_reset = 0;
 		m_jump = 0;
+		incr = 1;
 	}
 	sfg run_4 // B
 	{
@@ -179,6 +173,7 @@ dp doOperations{
 		S = 3;
 		m_reset = 0;
 		m_jump = 0;
+		incr = 0;
 	}
 	sfg run_5
 	{
@@ -188,6 +183,7 @@ dp doOperations{
 		m_reset = 0;
 		m_jump = 1;
 		m_jmpto = 10;
+		incr = 0;
 	}
 	
 	sfg run_6 // A - B
@@ -197,6 +193,7 @@ dp doOperations{
 		S = 0;
 		m_reset = 0;
 		m_jump = 0;
+		incr = 0;
 	}
 }
 
