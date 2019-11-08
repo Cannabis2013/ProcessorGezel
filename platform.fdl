@@ -321,7 +321,7 @@ dp CPU(out M_datain : ns(32);
 		c_incr = 0;
 		
 		c_select = 0;
-		s_a_select = 0;
+		s_a_select = rm;
 		m_b_select = 0;
 		m_write = 1;
 		m_wr_adrs = rn;
@@ -333,7 +333,7 @@ dp CPU(out M_datain : ns(32);
 		M_datainrdy = 0;
 		M_cmd = 0;
 		
-		
+		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", rm = ", rm, ", reg_val_a = ", reg_val_a);
 	}
 	sfg MOVc
 	{
@@ -356,7 +356,7 @@ dp CPU(out M_datain : ns(32);
 		M_cmd = 536870912;
 		
 		M_bus_rdy = 0;
-		
+		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", rm = ", rm,", INPUT = ",M_data);
 	}
 	sfg JEZ
 	{
@@ -506,7 +506,7 @@ dp CPU(out M_datain : ns(32);
 		M_datainrdy = 1;
 		M_cmd = 0;
 		
-		$display($dec,"Cycle = ", $cycle, ": OUTPUT = ",reg_val_a);
+		$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
 	}
 	
 	sfg IDL
