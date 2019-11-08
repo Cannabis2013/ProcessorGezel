@@ -243,7 +243,7 @@ dp CPU(out M_datain : ns(32);
 		M_data = 0;
 	}
 	
-	sfg WAIT // Wait for master bus
+	sfg WAIT_REQ // Wait for master bus
 	{
 		m_jumpto = 0;
 		
@@ -252,6 +252,30 @@ dp CPU(out M_datain : ns(32);
 		
 		c_select = 0;
 		s_a_select = 3;
+		m_b_select = 0;
+		m_write = 0;
+		m_wr_adrs = 0;
+		m_wr_val = 0;
+		m_alu_a = 0;
+		m_alu_b = 0;
+		
+		M_datain = reg_val_a;
+		M_datainrdy = M_dataoutrdy ? 0 : 1;
+		M_cmd = 536870912;
+		
+		M_data = M_dataoutrdy ? M_dataout : 0;
+		M_bus_rdy = M_dataoutrdy;
+	}
+	
+	sfg WAIT_OUT // Wait for master bus
+	{
+		m_jumpto = 0;
+		
+		c_jump = 0;
+		c_incr = 0;
+		
+		c_select = 0;
+		s_a_select = rn;
 		m_b_select = 0;
 		m_write = 0;
 		m_wr_adrs = 0;
@@ -481,6 +505,8 @@ dp CPU(out M_datain : ns(32);
 		M_datain = reg_val_a;
 		M_datainrdy = 1;
 		M_cmd = 0;
+		
+		$display($dec,"Cycle = ", $cycle, ": OUTPUT = ",reg_val_a);
 	}
 	
 	sfg IDL
@@ -508,22 +534,23 @@ dp CPU(out M_datain : ns(32);
 fsm controller(CPU)
 {
 	initial s0;
-	state s1,s2,s3,s4;
+	state s1,s2,s3,s4,s5;
 	@s0 (FETCH) -> s1;
-	@s1 if (m_opt_id == 0) then (MOVa,DISP) -> s0;
-		else if(m_opt_id == 1) then (WAIT,DISP) -> s2;
-		else if(m_opt_id == 2) then (JEZ,DISP) -> s4;
-		else if(m_opt_id == 3) then (ADD,DISP) -> s0;
-		else if(m_opt_id == 4) then (JLT,DISP) -> s4;
-		else if(m_opt_id == 5) then (MOVb,DISP) -> s0;
-		else if(m_opt_id == 7) then (RET,DISP) -> s0;
-		else if(m_opt_id == 8) then (SUBI,DISP) -> s0;
-		else if(m_opt_id == 12) then (JMP,DISP) -> s4;
-		else (ADDI,DISP) -> s0;
-	@s2 if(M_bus_rdy) then (MOVc,DISP) -> s0;
-			else (WAIT) -> s2;
-	@s3 (IDL) -> s3;
-	@s4 (SKIP) -> s0;
+	@s1 if (m_opt_id == 0) then (MOVa) -> s0;
+		else if(m_opt_id == 1) then (WAIT_REQ) -> s2;
+		else if(m_opt_id == 2) then (JEZ) -> s3;
+		else if(m_opt_id == 3) then (ADD) -> s0;
+		else if(m_opt_id == 4) then (JLT) -> s3;
+		else if(m_opt_id == 5) then (MOVb) -> s0;
+		else if(m_opt_id == 6) then (IDL) -> s4;
+		else if(m_opt_id == 7) then (RET) -> s0;
+		else if(m_opt_id == 8) then (SUBI) -> s0;
+		else if(m_opt_id == 12) then (JMP) -> s3;
+		else (ADDI) -> s0;
+	@s2 if(M_bus_rdy) then (MOVc) -> s0;
+			else (WAIT_REQ) -> s2;
+	@s3 (SKIP) -> s0;
+	@s4 (IDL) -> s4;
 }
 ////////////////////////////
 // Bus
