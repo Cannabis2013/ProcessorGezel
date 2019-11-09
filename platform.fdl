@@ -42,7 +42,7 @@ dp register(in aSel, bSel : ns(3);in write : ns(1); in valAdress : ns(3);in stor
 		a6 = write ? (valAdress == 6) ? storeVal : a6 : a6;
 		a7 = write ? (valAdress == 7) ? storeVal : a7 : a7;
 		
-		$display($dec,"Cycle:",$cycle, ", a1 = ",a1, ", a2 = ", a2, ", a3 = ", a3, ", a4 = ", a4, ", a5 = ", a5, ", a6 = ", a6, ", a7 = ", a7 );
+		//$display($dec,"Cycle:",$cycle, ", a1 = ",a1, ", a2 = ", a2, ", a3 = ", a3, ", a4 = ", a4, ", a5 = ", a5, ", a6 = ", a6, ", a7 = ", a7 );
 	}
 }
 
@@ -527,7 +527,7 @@ dp CPU(out M_datain : ns(32);
 		M_datainrdy = 1;
 		M_cmd = 0;
 		
-		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
+		$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
 	}
 	
 	sfg IDL
