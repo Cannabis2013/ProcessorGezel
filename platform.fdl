@@ -343,7 +343,7 @@ dp CPU(out M_datain : ns(32);
 		c_incr = 0;
 		
 		c_select = 2;
-		s_a_select = 3;
+		s_a_select = rn;
 		m_b_select = 0;
 		m_write = 1;
 		m_wr_adrs = rn;
