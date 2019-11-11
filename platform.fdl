@@ -507,6 +507,27 @@ dp CPU(out M_datain : ns(32);
 		M_cmd = 0;
 	}
 	
+	sfg DIV
+	{
+		m_jumpto = 0;
+		
+		c_jump = 0;
+		c_incr = 0;
+		
+		c_select = 0;
+		s_a_select = rm;
+		m_b_select = 0;
+		m_write = 1;
+		m_wr_adrs = rn;
+		m_wr_val = reg_val_a >> 5;
+		m_alu_a = 0;
+		m_alu_b = 0;
+		
+		M_datain = reg_val_a;
+		M_datainrdy = 0;
+		M_cmd = 0;
+	}
+	
 	sfg RET
 	{
 		m_jumpto = 0;
@@ -549,7 +570,7 @@ dp CPU(out M_datain : ns(32);
 		M_datain = 0;
 		M_datainrdy = 0;
 		M_cmd = 0;
-		//$display($dec,"Cycle = ", $cycle);
+		$display($dec,"Cycle = ", $cycle,"IDLE");
 	}
 }
 
@@ -569,6 +590,7 @@ fsm controller(CPU)
 		else if(m_opt_id == 8) then (SUBI) -> s0;
 		else if(m_opt_id == 9) then (SUB) -> s0;
 		else if(m_opt_id == 12) then (JMP) -> s3;
+		else if(m_opt_id == 14) then (DIV) -> s3;
 		else (ADDI) -> s0;
 	@s2 if(M_bus_rdy) then (MOVc) -> s0;
 			else (WAIT_REQ) -> s2;
