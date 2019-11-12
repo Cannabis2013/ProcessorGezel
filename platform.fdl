@@ -1207,7 +1207,6 @@ dp Output(
        cmdr = cmd;
        
        FilterOut = FilterOut_r;
-	   $display($dec,"Cycle = ", $cycle, ": ", OUTPUT = ",datain);
    }
    
    sfg awaithandshake{
