@@ -218,6 +218,9 @@ dp CPU(out M_datain : ns(32);
 		M_datainrdy = 0;
 		M_cmd = 0;
 		M_data = 0;
+		
+		M_bus_rdy = 0;
+		
 	}
 	
 	sfg SKIP // SKIP cycle to flush wrong instruction due to JUMPS
@@ -331,7 +334,6 @@ dp CPU(out M_datain : ns(32);
 		M_datainrdy = 0;
 		M_cmd = 536870912;
 		
-		M_bus_rdy = 0;
 		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", rm = ", rm,", INPUT = ",M_data);
 	}
 	sfg JEZ
@@ -521,8 +523,10 @@ dp CPU(out M_datain : ns(32);
 		m_alu_b = 0;
 		
 		M_datain = reg_val_a;
-		M_datainrdy = 1;
+		M_datainrdy = M_dataoutrdy ? 0 : 1 ;
 		M_cmd = 939524096;
+		
+		M_bus_rdy = M_dataoutrdy;
 		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
 	}
 	
@@ -561,7 +565,7 @@ fsm controller(CPU)
 		else if(m_opt_id == 4) then (JLT) -> s3;
 		else if(m_opt_id == 5) then (MOVb) -> s0;
 		else if(m_opt_id == 6) then (IDL) -> s4;
-		else if(m_opt_id == 7) then (RET) -> s0;
+		else if(m_opt_id == 7) then (RET) -> s5;
 		else if(m_opt_id == 8) then (SUBI) -> s0;
 		else if(m_opt_id == 9) then (SUB) -> s0;
 		else if(m_opt_id == 12) then (JMP) -> s3;
@@ -571,6 +575,8 @@ fsm controller(CPU)
 			else (WAIT_REQ) -> s2;
 	@s3 (SKIP) -> s0;
 	@s4 (IDL) -> s4;
+	@s5 if(M_bus_rdy) then (FETCH) -> s1;
+			else (RET) -> s5;
 }
 ////////////////////////////
 // Bus
@@ -1191,6 +1197,7 @@ dp Output(
    reg stallr : ns(1);
    reg count : ns(10);
    reg FilterOut_r : tc(32);
+   reg hasdata : ns(1);
    
    $trace(FilterOut, "traces/FilterOut.seq");
    $trace(count, "traces/out_count.seq");
@@ -1202,23 +1209,22 @@ dp Output(
    
    sfg captureData{
        dataoutrdy = 0; 
-       datainrdyr = datainrdy;
-       datainr = datain;
-       cmdr = cmd;
+       
+       hasdata = 0;
        
        FilterOut = FilterOut_r;
-	   $display($dec,"Cycle = ", $cycle, ", OUTPUT = ",datain);
+	   $display($dec,"Cycle = ", $cycle, ", OUTPUT = ",FilterOut);
    }
    
    sfg awaithandshake{
       dataoutrdy = 0;
-      
       FilterOut = FilterOut_r;
    }
    
    sfg resetAndSignalRdy{
      dataoutrdy = 1;
      datainrdyr = 0;
+     
    }
    
    sfg nothing{
@@ -1231,19 +1237,35 @@ dp Output(
       FilterOut = datainr;
       FilterOut_r = datainr;
       count = count + 1;
+      
+   }
+   sfg hData
+   {
+   	  hasdata = 1;
+   	  
+   }
+   sfg SKIP
+   {
+   	datainrdyr = datainrdy;
+    datainr = datain;
+    cmdr = cmd;
+   	dataoutrdy = 0;
+   	FilterOut = FilterOut_r;
    }
    
 }
 
 fsm Output_cntrl(Output){
    initial s0;
-   state s1;
+   state s1,s2;
    
    @s0 if (datainrdyr == 1 & stallr == 0) then (resetAndSignalRdy,setFilterOut) -> s0;
        else if (datainrdyr == 1 & stallr == 1) then (nothing) -> s1;
-       else (captureData) -> s0;
-   @s1 if (stallr == 0) then (resetAndSignalRdy,setFilterOut) -> s0;
+       else if(hasdata == 1) then (captureData) -> s0;
+       else (SKIP) -> s0;
+   @s1 if (stallr == 0) then (resetAndSignalRdy,setFilterOut,hData) -> s2;
        else (awaithandshake) -> s1;
+   @s2 (SKIP) ->s0;
        
 }
 
