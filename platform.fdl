@@ -523,7 +523,7 @@ dp CPU(out M_datain : ns(32);
 		M_datain = reg_val_a;
 		M_datainrdy = 1;
 		M_cmd = 939524096;
-		$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
+		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
 	}
 	
 	sfg IDL
@@ -1207,6 +1207,7 @@ dp Output(
        cmdr = cmd;
        
        FilterOut = FilterOut_r;
+	   $display($dec,"Cycle = ", $cycle, ", OUTPUT = ",datain);
    }
    
    sfg awaithandshake{
