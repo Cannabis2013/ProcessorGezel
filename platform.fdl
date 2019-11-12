@@ -267,30 +267,6 @@ dp CPU(out M_datain : ns(32);
 		M_bus_rdy = M_dataoutrdy;
 	}
 	
-	sfg WAIT_OUT // Wait for master bus
-	{
-		m_jumpto = 0;
-		
-		c_jump = 0;
-		c_incr = 0;
-		
-		c_select = 0;
-		s_a_select = rn;
-		m_b_select = 0;
-		m_write = 0;
-		m_wr_adrs = 0;
-		m_wr_val = 0;
-		m_alu_a = 0;
-		m_alu_b = 0;
-		
-		M_datain = reg_val_a;
-		M_datainrdy = M_dataoutrdy ? 0 : 1;
-		M_cmd = 536870912;
-		
-		M_data = M_dataoutrdy ? M_dataout : 0;
-		M_bus_rdy = M_dataoutrdy;
-	}
-	
 	sfg MOVa
 	{
 		m_jumpto = 0;
@@ -546,9 +522,8 @@ dp CPU(out M_datain : ns(32);
 		
 		M_datain = reg_val_a;
 		M_datainrdy = 1;
-		M_cmd = 0;
-		
-		$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
+		M_cmd = 939524096;
+		//$display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",reg_val_a);
 	}
 	
 	sfg IDL
@@ -1232,6 +1207,7 @@ dp Output(
        cmdr = cmd;
        
        FilterOut = FilterOut_r;
+	   $display($dec,"Cycle = ", $cycle, ": rn = ", rn, ", OUTPUT = ",datain);
    }
    
    sfg awaithandshake{
